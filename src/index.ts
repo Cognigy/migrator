@@ -1,5 +1,5 @@
 import * as fs from 'fs-extra';
-import { createFolderIfNotExist } from './helper/utils';
+import { createFolderIfNotExist, replaceObjectIDs } from './helper/utils';
 import { logGreen, logRed } from './helper/logger';
 import { connectToMongo } from './helper/MongoConnection';
 import * as inquirer from 'inquirer';
@@ -94,9 +94,10 @@ async function storeProject(project: IProject): Promise<void> {
     createFolderIfNotExist(`/data/organisations/${process.env.SOURCE_ORG}/projects`);
     if (fs.existsSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}`)) fs.removeSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}`);
     createFolderIfNotExist(`/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}`);
-    fs.writeFileSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}/${project._id}.json`, JSON.stringify(project));
+    fs.writeFileSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}/${project._id}.json`, JSON.stringify(replaceObjectIDs(project)));
     logGreen("Stored project JSON...");
 }
+
 
 /**
  * Stores resources into folder
@@ -107,7 +108,7 @@ async function storeProject(project: IProject): Promise<void> {
 async function storeResources(type: string, resources: Array<any>, project: IProject): Promise<void> {
     createFolderIfNotExist(`/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}/${type}`);
     resources.forEach((resource) => {
-        fs.writeFileSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}/${type}/${resource._id}.json`, JSON.stringify(resource));
+        fs.writeFileSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}/${type}/${resource._id}.json`, JSON.stringify(replaceObjectIDs(resource)));
     });
 }
 
