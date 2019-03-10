@@ -94,7 +94,7 @@ async function storeProject(project: IProject): Promise<void> {
     createFolderIfNotExist(`/data/organisations/${process.env.SOURCE_ORG}/projects`);
     if (fs.existsSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}`)) fs.removeSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}`);
     createFolderIfNotExist(`/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}`);
-    fs.writeFileSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}/${project._id}.json`, JSON.stringify(replaceObjectIDs(project)));
+    fs.writeFileSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}/${project._id}.json`, JSON.stringify(replaceObjectIDs(project), undefined, 4));
     logGreen("Stored project JSON...");
 }
 
@@ -108,7 +108,7 @@ async function storeProject(project: IProject): Promise<void> {
 async function storeResources(type: string, resources: Array<any>, project: IProject): Promise<void> {
     createFolderIfNotExist(`/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}/${type}`);
     resources.forEach((resource) => {
-        fs.writeFileSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}/${type}/${resource._id}.json`, JSON.stringify(replaceObjectIDs(resource)));
+        fs.writeFileSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}/${type}/${resource._id}.json`, JSON.stringify(replaceObjectIDs(resource), undefined, 4));
     });
 }
 
@@ -121,20 +121,18 @@ async function retrieveResources(resources: any, selectedProject: IProject): Pro
     logGreen(`Storing project resources ...`);
     for (let resourceType of Object.keys(resources)) {
         if (resources[resourceType].length > 0) {
+            logGreen(`Retrieving ${resources[resourceType].length} ${resourceType.substr(0, resourceType.length - 1)}(s) ...`);
             let resourceDBName = resourceType;
             if (resourceType === "databaseconnections") resourceDBName = "database-connections";
             if (resourceType === "nlpconnectors") resourceDBName = "nlp-connectors";
             const resourceDB = mongoClient.db(resourceDBName);
             for (let resource of resources[resourceType]) {
-                if (resourceType === "flows") {
-                    let retrievedFlows = await resourceDB.collection(resourceType).find({ parentId: resource }).toArray();
-                    await storeResources("flows", retrievedFlows, selectedProject);
-                    logGreen(`Stored flows with parentId ${resource} ...`);
-                } else {
-                    let retrievedResource = await resourceDB.collection(resourceType).find({ _id: resource }).toArray();
+                const query = (resourceType === "flows") ? { parentId: resource } : { _id: resource };
+                let retrievedResource = await resourceDB.collection(resourceType).find(query).toArray();
+                if (retrievedResource.length > 0) {
                     await storeResources(resourceType, retrievedResource, selectedProject);
-                    logGreen(`Stored ${resourceType} with id ${resource} ...`);
-                }
+                    logGreen(`Stored ${resourceType.substr(0, resourceType.length - 1)} with id ${resource} ...`);
+                } else logGreen(`No ${resourceType} found. Continuing...`);
             }
         }
     }
