@@ -65,8 +65,8 @@ async function selectProject(projects: any[]): Promise<any> {
         return inquirer
             .prompt([
                 {
-                    type: 'list',
-                    message: 'Select Project to export',
+                    type: 'checkbox',
+                    message: 'Select Projects to export',
                     name: 'project',
                     choices: projectChoices,
                     validate: (answer) => {
@@ -190,10 +190,14 @@ async function start(): Promise<void> {
         const projects = await getProjects();
 
         // select a project
-        const selectedProject = await selectProject(projects);
+        const selectedProjects = await selectProject(projects);
 
-        // start the export of the project
-        await exportProject(selectedProject);
+        for (let selectedProject of selectedProjects) {
+            logGreen("\n################################################################\nStarting export of project " + selectedProject);
+            // start the export of the project
+            await exportProject(selectedProject);
+            logGreen("\Finished export of project " + selectedProject + "\n################################################################\n");
+        }
 
         // log success message
         logGreen("\nDONE - your export has been saved to disc.");
