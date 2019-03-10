@@ -1,7 +1,9 @@
 import * as fs from 'fs-extra';
 import { ObjectID } from 'mongodb';
-import { logGreen } from './logger';
+import { logRed } from './logger';
 import * as _ from 'lodash';
+import * as dependencyReplacements from '../dependencyReplacements.json';
+
 
 /**
  * Creates a folder if it doesn't exist yet
@@ -31,10 +33,14 @@ function recursiveReplacer(resource: any): any {
         Object.keys(resource).forEach((key) => {
             if (key === "_id" || (typeof resource[key] === 'object' && resource[key] instanceof ObjectID)) {
                 resource[key] = { "$oid": resource[key].toString() };
-            } else if (!Array.isArray(resource[key]) && resource[key] && resource[key].toString() && resource[key].toString().match(/^[a-f\d]{24}$/i)) {
+            } else if (!Array.isArray(resource[key]) && resource[key] && !resource["exampleSentences"] && resource[key].toString() && resource[key].toString().match(/^[a-f\d]{24}$/i)) {
                 resource[key] = { "$oid": resource[key].toString() };
             } else if (typeof resource[key] === 'object') {
-                resource[key] = recursiveReplacer(resource[key]);
+                if (key === "lexica") {
+                    resource[key]._id = { "$oid": resource[key]._id.toString() };
+                } else {
+                    resource[key] = recursiveReplacer(resource[key]);
+                }
             }
         });
     }
@@ -46,10 +52,35 @@ function recursiveReplacer(resource: any): any {
  * @param resource Resource object to check
  */
 export function replaceObjectIDs(resource: any): any {
-    /*let clonedResource = _.cloneDeepWith(resource, (value,) => {
-        if (value instanceof ObjectID) return { "$oid": value.toString() };
-        else return undefined;
-    });*/
     let clonedResource = recursiveReplacer(_.cloneDeep(resource));
     return clonedResource;
+}
+
+/**
+ * Checks for dependencies such as Cognigy Lexicons and Cognigy Flows
+ * These dependencies must be mapped in dependencyReplacements.json, otherwise an error is thrown
+ * @param resource Flow to check
+ */
+export function checkFlowDependencies(resource: any): any {
+    if (resource && resource.lexica && resource.lexica.cognigy && Array.isArray(resource.lexica.cognigy) && resource.lexica.cognigy.length > 0) {
+        // there are attached Cognigy Lexica
+        resource.lexica.cognigy.forEach((value, index, sourceArray) => {
+            if (dependencyReplacements[value]) sourceArray[index] = dependencyReplacements[value];
+            else {
+                logRed(`Missing dependency mapping in dependencyReplacements.json: COGNIGGY LEXICON ${value}\nPlease add this resource to the file.\nAborting...`);
+                process.exit(0);
+            }
+        });
+    }
+
+    if (resource && resource.attachedFlows && resource.attachedFlows.cognigy && Array.isArray(resource.attachedFlows.cognigy) && resource.attachedFlows.cognigy.length > 0) {
+        // there are attached Cognigy Flows
+        resource.attachedFlows.cognigy.forEach((value, index, sourceArray) => {
+            if (dependencyReplacements[value]) sourceArray[index] = dependencyReplacements[value];
+            else {
+                logRed(`Missing dependency mapping in dependencyReplacements.json: ATTACHED COGNIGY FLOW ${value}\nPlease add this resource to the file.\nAborting...`);
+                process.exit(0);
+            }
+        });
+    }
 }

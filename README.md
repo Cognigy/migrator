@@ -16,3 +16,7 @@ Please note that before importing a project, you need to change the organisation
 - The tool will now start to export your projects and resources. This can take a while depending on connection speed and project size
 - After the tool is done, you will see your export in `./build/data/{projectId}`
 
+## Dependencies
+Some resources, such as Cognigy Lexicons (e.g. citiesEN) or Cognigy Attached Flows (e.g. smalltalkEN) will have other IDs in the target and source environments.
+
+For that reason you need to create a map and store it in dependencyReplacements.json. This map is used to translate the resources from one to the other environment.
