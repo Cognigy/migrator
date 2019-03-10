@@ -12,6 +12,7 @@ Please note that before importing a project, you need to change the organisation
 - Create a .env file with your MongoDB admin credentials (see .env-dist for an example)
 - Run `npm start`
 - If everything goes well, you should see a list of projects
-- Select the project
+- Select the projects to export
+- The tool will now start to export your projects and resources. This can take a while depending on connection speed and project size
 - After the tool is done, you will see your export in `./build/data/{projectId}`
 
