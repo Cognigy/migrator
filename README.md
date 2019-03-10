@@ -3,7 +3,7 @@ This tool allows for the export of a Cognigy.AI project, including all resources
 
 The resulting files can then easily be imported into another environment.
 
-Please note that before importing a project, you need to change the organisation property in the project JSON file.
+Please note that before importing a project, you need to change the organisation property in the project JSON file to the organisation ID on your new environment.
 
 ## How to use the tool
 - Clone this repo
