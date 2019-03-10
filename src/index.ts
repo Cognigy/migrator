@@ -196,7 +196,7 @@ async function start(): Promise<void> {
             logGreen("\n################################################################\nStarting export of project " + selectedProject);
             // start the export of the project
             await exportProject(selectedProject);
-            logGreen("\Finished export of project " + selectedProject + "\n################################################################\n");
+            logGreen("\nFinished export of project " + selectedProject + "\n################################################################\n");
         }
 
         // log success message
