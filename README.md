@@ -1,7 +1,5 @@
 # Cognigy Environment Migrator
 
-THIS TOOL IS CURRENTLY UNDER DEVELOPMENT!
-
 This tool allows for the export of a Cognigy.AI project, including all resources, to disc.
 
 The resulting files can then easily be imported into another environment.
@@ -23,3 +21,8 @@ Please note that before importing a project, you need to change the organisation
 Some resources, such as Cognigy Lexicons (e.g. citiesEN) or Cognigy Attached Flows (e.g. smalltalkEN) will have other IDs in the target and source environments.
 
 For that reason you need to create a map and store it in dependencyReplacements.json. This map is used to translate the resources from one to the other environment.
+
+## How to import
+You can import the JSON files with the tool of your choice, for example mongoimport or Studio 3T.
+
+After you import a Flow, you will need to re-train its Intents.

@@ -94,7 +94,7 @@ async function storeProject(project: IProject): Promise<void> {
     createFolderIfNotExist(`/data/organisations/${process.env.SOURCE_ORG}/projects`);
     if (fs.existsSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}`)) fs.removeSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}`);
     createFolderIfNotExist(`/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}`);
-    fs.writeFileSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}/${project._id}.json`, JSON.stringify(replaceObjectIDs(project), undefined, 4));
+    fs.writeFileSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}/${project._id}.json`, JSON.stringify(replaceObjectIDs(project)));
     logGreen("Stored project JSON...");
 }
 
@@ -109,8 +109,15 @@ async function storeProject(project: IProject): Promise<void> {
 async function storeResources(type: string, resources: Array<any>, project: IProject): Promise<void> {
     createFolderIfNotExist(`/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}/${type}`);
     resources.forEach((resource) => {
-        if (type === "flows") checkFlowDependencies(resource);
-        fs.writeFileSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}/${type}/${resource._id}.json`, JSON.stringify(replaceObjectIDs(resource), undefined, 4));
+        if (type === "flows") {
+            // resolve dependencies in map
+            checkFlowDependencies(resource);
+
+            // set trained to false to force retraining
+            if (resource && resource.newIntents && resource.newIntents.trained) resource.newIntents.trained = false;
+            if (resource && resource.newIntents && resource.newIntents.modelId) resource.newIntents.modelId = null;
+        }
+        fs.writeFileSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}/${type}/${resource._id}.json`, JSON.stringify(replaceObjectIDs(resource)));
     });
 }
 
