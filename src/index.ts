@@ -88,12 +88,17 @@ async function selectProject(projects: any[]): Promise<any> {
  * @param project The selected project
  */
 async function storeProject(project: IProject): Promise<void> {
+    // create basic folder structure if it doesn't exist
     createFolderIfNotExist(`/data`);
     createFolderIfNotExist(`/data/organisations/`);
     createFolderIfNotExist(`/data/organisations/${process.env.SOURCE_ORG}`);
     createFolderIfNotExist(`/data/organisations/${process.env.SOURCE_ORG}/projects`);
+
+    // delete project folder if it exists and recreate
     if (fs.existsSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}`)) fs.removeSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}`);
     createFolderIfNotExist(`/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}`);
+
+    // save project JSON
     fs.writeFileSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}/${project._id}.json`, JSON.stringify(replaceObjectIDs(project)));
     logGreen("Stored project JSON...");
 }
@@ -128,16 +133,25 @@ async function storeResources(type: string, resources: Array<any>, project: IPro
  */
 async function retrieveResources(resources: any, selectedProject: IProject): Promise<any> {
     logGreen(`Storing project resources ...`);
+
+    // go through list of all resources
     for (let resourceType of Object.keys(resources)) {
         if (resources[resourceType].length > 0) {
             logGreen(`Retrieving ${resources[resourceType].length} ${resourceType.substr(0, resourceType.length - 1)}(s) ...`);
+
+            // connect to the correct source db
             let resourceDBName = resourceType;
             if (resourceType === "databaseconnections") resourceDBName = "database-connections";
             if (resourceType === "nlpconnectors") resourceDBName = "nlp-connectors";
             const resourceDB = mongoClient.db(resourceDBName);
+
+            // go through all resources in resource type
             for (let resource of resources[resourceType]) {
+                // retrieve resource from sourcedatabase
                 const query = (resourceType === "flows") ? { parentId: resource } : { _id: resource };
                 let retrievedResource = await resourceDB.collection(resourceType).find(query).toArray();
+
+                // if resources found, execute store functions
                 if (retrievedResource.length > 0) {
                     await storeResources(resourceType, retrievedResource, selectedProject);
                     logGreen(`Stored ${resourceType.substr(0, resourceType.length - 1)} with id ${resource} ...`);
@@ -154,6 +168,7 @@ async function retrieveResources(resources: any, selectedProject: IProject): Pro
 async function exportProject(projectID: string): Promise<void> {
     const selectedProject: IProject = allProjects.find((element) => element._id.toString() === projectID);
     if (selectedProject) {
+        // store project datastructure and metadata
         await storeProject(selectedProject);
         const resources = {
             flows: [],
@@ -166,7 +181,7 @@ async function exportProject(projectID: string): Promise<void> {
             secrets: [],
             settings: []
         };
-
+        // store IDs of resources in resources arrays
         selectedProject.resources.forEach((resource) => {
             switch (resource.type) {
                 case "flow":
@@ -176,7 +191,7 @@ async function exportProject(projectID: string): Promise<void> {
                     resources[`${resource.type}s`].push(resource._id);
             }
         });
-
+        // add settings as a resource
         resources.settings.push(selectedProject.settingsId);
 
         await retrieveResources(resources, selectedProject);

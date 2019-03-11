@@ -17,7 +17,7 @@ export async function createFolderIfNotExist(path: string): Promise<void> {
 }
 
 /**
- * DEPRECATED Function, not used
+ * Recursively traverses a resource and replaces Object IDs with the correct notation to re-import into MongoDB ($oid)
  * @param resource The resource to clone
  */
 function recursiveReplacer(resource: any): any {
@@ -62,6 +62,7 @@ export function replaceObjectIDs(resource: any): any {
  * @param resource Flow to check
  */
 export function checkFlowDependencies(resource: any): any {
+    // Check if there are Cognigy lexica and if yes, check if they are in the dependency map
     if (resource && resource.lexica && resource.lexica.cognigy && Array.isArray(resource.lexica.cognigy) && resource.lexica.cognigy.length > 0) {
         // there are attached Cognigy Lexica
         resource.lexica.cognigy.forEach((value, index, sourceArray) => {
@@ -73,6 +74,7 @@ export function checkFlowDependencies(resource: any): any {
         });
     }
 
+    // Check if there are Cognigy attached Flows and if yes, check if they are in the dependency map
     if (resource && resource.attachedFlows && resource.attachedFlows.cognigy && Array.isArray(resource.attachedFlows.cognigy) && resource.attachedFlows.cognigy.length > 0) {
         // there are attached Cognigy Flows
         resource.attachedFlows.cognigy.forEach((value, index, sourceArray) => {
