@@ -45,7 +45,7 @@ async function getProjects(): Promise<any> {
     try {
         const projectsDB = mongoClient.db("projects");
         return projectsDB.collection("projects")
-            .find({ organisation: new ObjectID(process.env.SOURCE_ORG) })
+            .find({ organisation: new ObjectID(process.env.SOURCE_ORG_ID) })
             .toArray();
     } catch (err) {
         return Promise.reject(err);
@@ -91,15 +91,15 @@ async function storeProject(project: IProject): Promise<void> {
     // create basic folder structure if it doesn't exist
     createFolderIfNotExist(`/data`);
     createFolderIfNotExist(`/data/organisations/`);
-    createFolderIfNotExist(`/data/organisations/${process.env.SOURCE_ORG}`);
-    createFolderIfNotExist(`/data/organisations/${process.env.SOURCE_ORG}/projects`);
+    createFolderIfNotExist(`/data/organisations/${process.env.SOURCE_ORG_ID}`);
+    createFolderIfNotExist(`/data/organisations/${process.env.SOURCE_ORG_ID}/projects`);
 
     // delete project folder if it exists and recreate
-    if (fs.existsSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}`)) fs.removeSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}`);
-    createFolderIfNotExist(`/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}`);
+    if (fs.existsSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG_ID}/projects/${project._id}`)) fs.removeSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG_ID}/projects/${project._id}`);
+    createFolderIfNotExist(`/data/organisations/${process.env.SOURCE_ORG_ID}/projects/${project._id}`);
 
     // save project JSON
-    fs.writeFileSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}/${project._id}.json`, JSON.stringify(replaceObjectIDs(project)));
+    fs.writeFileSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG_ID}/projects/${project._id}/${project._id}.json`, JSON.stringify(replaceObjectIDs(project)));
     logGreen("Stored project JSON...");
 }
 
@@ -112,7 +112,7 @@ async function storeProject(project: IProject): Promise<void> {
  * @param project Project these resources belong to
  */
 async function storeResources(type: string, resources: Array<any>, project: IProject): Promise<void> {
-    createFolderIfNotExist(`/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}/${type}`);
+    createFolderIfNotExist(`/data/organisations/${process.env.SOURCE_ORG_ID}/projects/${project._id}/${type}`);
     resources.forEach((resource) => {
         if (type === "flows") {
             // resolve dependencies in map
@@ -122,7 +122,7 @@ async function storeResources(type: string, resources: Array<any>, project: IPro
             if (resource && resource.newIntents && resource.newIntents.trained) resource.newIntents.trained = false;
             if (resource && resource.newIntents && resource.newIntents.modelId) resource.newIntents.modelId = null;
         }
-        fs.writeFileSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG}/projects/${project._id}/${type}/${resource._id}.json`, JSON.stringify(replaceObjectIDs(resource)));
+        fs.writeFileSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG_ID}/projects/${project._id}/${type}/${resource._id}.json`, JSON.stringify(replaceObjectIDs(resource)));
     });
 }
 
