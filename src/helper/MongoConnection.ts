@@ -7,7 +7,7 @@ class MongoConnection {
     async connectToMongo(): Promise<Boolean> {
         // Connection URL
         const url = `mongodb://${process.env.SOURCE_DB_USERNAME}:${encodeURIComponent(process.env.SOURCE_DB_PASSWORD)}@${process.env.SOURCE_DB_HOST}:${process.env.SOURCE_DB_PORT}`;
-
+        console.log(`Connecting to mongodb://${process.env.SOURCE_DB_USERNAME}:${encodeURIComponent(process.env.SOURCE_DB_PASSWORD)}@${process.env.SOURCE_DB_HOST}:${process.env.SOURCE_DB_PORT}`);
         this.mongoConnection = await MongoClient.connect(url, { useNewUrlParser: true });
 
         return true;
