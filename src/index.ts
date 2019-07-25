@@ -4,6 +4,8 @@ import MongoConnection from './helper/MongoConnection';
 import * as inquirer from 'inquirer';
 import { ObjectID } from 'mongodb';
 import * as projects from './project';
+import { IExportOptions } from './helper/interfaces';
+import { exportDocuments } from './documents';
 
 // global variable to store projects
 let allProjects = [];
@@ -35,7 +37,8 @@ async function showTaskSelection(): Promise<any> {
                     'Projects',
                     'Analytics',
                     'Conversations',
-                    'Profiles'
+                    'Profiles',
+                    'ProfileSchemas'
                 ]
             }
         ])
@@ -116,10 +119,12 @@ async function start(): Promise<void> {
         await showWelcomeMessage();
 
         // connect to the source mongodb
-        const mongoClient = await connectToDB();
+        await connectToDB();
 
         // select what to export
         const task = await showTaskSelection();
+
+        let exportOptions: IExportOptions = null;
 
         switch (task) {
             case "Projects":
@@ -141,16 +146,51 @@ async function start(): Promise<void> {
                 break;
 
             case "Conversations":
+                    exportOptions = {
+                        type: 'conversations',
+                        db: 'service-analytics-conversation-collector',
+                        collection: 'conversations',
+                        replaceObjectIDs: false
+                    };
                 break;
 
             case "Analytics":
+                    exportOptions = {
+                        type: 'analytics',
+                        db: 'service-analytics-collector',
+                        collection: 'analytics',
+                        replaceObjectIDs: false
+                    };
                 break;
 
             case "Profiles":
+                    exportOptions = {
+                        type: 'profiles',
+                        db: 'service-profiles',
+                        collection: 'profiles',
+                        replaceObjectIDs: false
+                    };
                 break;
 
+            case "ProfileSchemas":
+                    exportOptions = {
+                        type: 'profileschemas',
+                        db: 'service-profiles',
+                        collection: 'profileschemas',
+                        replaceObjectIDs: false
+                    };
+                    break;
+
             default:
-                logGreen(`\nStarting task ${task}.`);
+                logGreen(`No task defined`);
+        }
+
+        if (exportOptions) {
+            logGreen("\n################################################################\n");
+            logGreen("Starting export of " + task);
+            const docCount = await exportDocuments(exportOptions);
+            logGreen(`\nFinished export of ${docCount} ${task} Records\n`);
+            logGreen("################################################################\n");
         }
 
         process.exit(0);
