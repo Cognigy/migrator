@@ -72,7 +72,7 @@ export function checkFlowDependencies(resource: any): any {
                     logRed(`Missing dependency mapping in dependencyReplacements.json: COGNIGGY LEXICON ${value}\nPlease add this resource to the file.\nAborting...`);
                     process.exit(0);
                 } else {
-                    logYellow(`Missing dependency mapping in dependencyReplacements.json: COGNIGGY LEXICON ${value}\nPlease add this resource to the file.\nAborting...`);
+                    logYellow(`Missing dependency mapping in dependencyReplacements.json: COGNIGGY LEXICON ${value}\nPlease add this resource to the file.`);
                 }
             }
         });
@@ -88,7 +88,7 @@ export function checkFlowDependencies(resource: any): any {
                     logRed(`Missing dependency mapping in dependencyReplacements.json: ATTACHED COGNIGY FLOW ${value}\nPlease add this resource to the file.\nAborting...`);
                     process.exit(0);
                 } else {
-                    logYellow(`Missing dependency mapping in dependencyReplacements.json: ATTACHED COGNIGY FLOW ${value}\nPlease add this resource to the file.\nAborting...`);
+                    logYellow(`Missing dependency mapping in dependencyReplacements.json: ATTACHED COGNIGY FLOW ${value}\nPlease add this resource to the file.`);
                 }
             }
         });
