@@ -25,3 +25,14 @@ export interface IProject {
 	/* the meta data of all referenced resources within this project */
 	resources: IProjectResource[];
 }
+
+export interface IExportOptions {
+    /* What are we exporting */
+    type: string;
+
+    /* What database are the documents in? */
+    db: string;
+
+    /* What collection are the documents in? */
+    collection: string;
+}

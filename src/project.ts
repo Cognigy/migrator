@@ -20,7 +20,7 @@ async function storeProject(project: IProject): Promise<void> {
     createFolderIfNotExist(`/data/organisations/${process.env.SOURCE_ORG_ID}/projects/${project._id}`);
 
     // save project JSON
-    project.organisation = process.env.TARGET_ORG;
+    project.organisation = process.env.TARGET_ORG_ID;
     fs.writeFileSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG_ID}/projects/${project._id}/${project._id}.json`, JSON.stringify(replaceObjectIDs(project)));
     logGreen("Stored project JSON...");
 }

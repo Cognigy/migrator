@@ -4,6 +4,8 @@ import MongoConnection from './helper/MongoConnection';
 import * as inquirer from 'inquirer';
 import { ObjectID } from 'mongodb';
 import * as projects from './project';
+import { IExportOptions } from './helper/interfaces';
+import { exportDocuments } from './documents';
 
 // global variable to store projects
 let allProjects = [];
@@ -144,6 +146,17 @@ async function start(): Promise<void> {
                 break;
 
             case "Analytics":
+                    const exportOptions: IExportOptions = {
+                        type: 'analytics',
+                        db: 'service-analytics-collector',
+                        collection: 'analytics'
+                    };
+
+                    logGreen("\n################################################################\n");
+                    logGreen("Starting export of " + task);
+                    const docCount = await exportDocuments(exportOptions);
+                    logGreen(`\nFinished export of ${docCount} ${task} Records\n`);
+                    logGreen("################################################################\n");
                 break;
 
             case "Profiles":
