@@ -12,7 +12,7 @@ export interface IProjectResource {
 
 export interface IProject {
     _id: string;
-    
+
     /* the mongo object id of the organisation this project belongs to */
 	organisation: string | number;
 

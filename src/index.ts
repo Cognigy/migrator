@@ -1,13 +1,9 @@
-import * as fs from 'fs-extra';
-import { createFolderIfNotExist, replaceObjectIDs, checkFlowDependencies } from './helper/utils';
-import { logGreen, logRed } from './helper/logger';
-import { connectToMongo } from './helper/MongoConnection';
-import * as inquirer from 'inquirer';
-import { MongoClient, ObjectID } from 'mongodb';
-import { IProject } from './helper/interfaces';
 
-// global Mongo connection
-let mongoClient: MongoClient = null;
+import { logGreen, logRed } from './helper/logger';
+import MongoConnection from './helper/MongoConnection';
+import * as inquirer from 'inquirer';
+import { ObjectID } from 'mongodb';
+import * as projects from './project';
 
 // global variable to store projects
 let allProjects = [];
@@ -17,20 +13,45 @@ let allProjects = [];
  */
 function showWelcomeMessage(): void {
     logGreen("**************************************************************");
-    logGreen("*               COGNIGY.AI MIGRATION TOOL v3.3               *");
+    logGreen("*               COGNIGY.AI MIGRATION TOOL v3.4               *");
     logGreen("*          currently this tool only supports exports         *");
+    logGreen("**************************************************************");
+    logGreen(`*         Exporting for Org ${process.env.SOURCE_ORG}         *`);
     logGreen("**************************************************************");
     logGreen("");
 }
 
 /**
+ * Asks the user what they want to do
+ */
+async function showTaskSelection(): Promise<any> {
+    return inquirer
+        .prompt([
+            {
+                type: 'list',
+                name: 'theme',
+                message: 'What do you want to export?',
+                choices: [
+                    'Projects',
+                    'Analytics',
+                    'Conversations',
+                    'Profiles'
+                ]
+            }
+        ])
+        .then(answers => {
+            return answers.theme;
+        });
+}
+
+/**
  * Connects to the source database
  */
-async function connectToDB(): Promise<void> {
+async function connectToDB(): Promise<any> {
     logGreen(`Attempting to connect to MongoDB at ${process.env.SOURCE_DB_HOST}:${process.env.SOURCE_DB_PORT}`);
 
     try {
-        mongoClient = await connectToMongo();
+        await MongoConnection.connectToMongo();
         logGreen("Connected to MongoDB");
         return Promise.resolve();
     } catch (err) {
@@ -43,6 +64,7 @@ async function connectToDB(): Promise<void> {
  */
 async function getProjects(): Promise<any> {
     try {
+        const mongoClient = MongoConnection.getConnection();
         const projectsDB = mongoClient.db("projects");
         return projectsDB.collection("projects")
             .find({ organisation: new ObjectID(process.env.SOURCE_ORG_ID) })
@@ -83,120 +105,7 @@ async function selectProject(projects: any[]): Promise<any> {
     }
 }
 
-/**
- * Creates folder structure for this project export and stores project JSON
- * @param project The selected project
- */
-async function storeProject(project: IProject): Promise<void> {
-    // create basic folder structure if it doesn't exist
-    createFolderIfNotExist(`/data`);
-    createFolderIfNotExist(`/data/organisations/`);
-    createFolderIfNotExist(`/data/organisations/${process.env.SOURCE_ORG_ID}`);
-    createFolderIfNotExist(`/data/organisations/${process.env.SOURCE_ORG_ID}/projects`);
 
-    // delete project folder if it exists and recreate
-    if (fs.existsSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG_ID}/projects/${project._id}`)) fs.removeSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG_ID}/projects/${project._id}`);
-    createFolderIfNotExist(`/data/organisations/${process.env.SOURCE_ORG_ID}/projects/${project._id}`);
-
-    // save project JSON
-    fs.writeFileSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG_ID}/projects/${project._id}/${project._id}.json`, JSON.stringify(replaceObjectIDs(project)));
-    logGreen("Stored project JSON...");
-}
-
-
-
-/**
- * Stores resources into folder
- * @param type Type of resource (e.g. flows)
- * @param resources Array of resources
- * @param project Project these resources belong to
- */
-async function storeResources(type: string, resources: Array<any>, project: IProject): Promise<void> {
-    createFolderIfNotExist(`/data/organisations/${process.env.SOURCE_ORG_ID}/projects/${project._id}/${type}`);
-    resources.forEach((resource) => {
-        if (type === "flows") {
-            // resolve dependencies in map
-            checkFlowDependencies(resource);
-
-            // set trained to false to force retraining
-            if (resource && resource.newIntents && resource.newIntents.trained) resource.newIntents.trained = false;
-            if (resource && resource.newIntents && resource.newIntents.modelId) resource.newIntents.modelId = null;
-        }
-        fs.writeFileSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG_ID}/projects/${project._id}/${type}/${resource._id}.json`, JSON.stringify(replaceObjectIDs(resource)));
-    });
-}
-
-/**
- * Retrieves the resources for a project
- * @param resources Object with resource arrays
- * @param selectedProject The selected project
- */
-async function retrieveResources(resources: any, selectedProject: IProject): Promise<any> {
-    logGreen(`Storing project resources ...`);
-
-    // go through list of all resources
-    for (let resourceType of Object.keys(resources)) {
-        if (resources[resourceType].length > 0) {
-            logGreen(`Retrieving ${resources[resourceType].length} ${resourceType.substr(0, resourceType.length - 1)}(s) ...`);
-
-            // connect to the correct source db
-            let resourceDBName = resourceType;
-            if (resourceType === "databaseconnections") resourceDBName = "database-connections";
-            if (resourceType === "nlpconnectors") resourceDBName = "nlp-connectors";
-            const resourceDB = mongoClient.db(resourceDBName);
-
-            // go through all resources in resource type
-            for (let resource of resources[resourceType]) {
-                // retrieve resource from sourcedatabase
-                const query = (resourceType === "flows") ? { parentId: resource } : { _id: resource };
-                let retrievedResource = await resourceDB.collection(resourceType).find(query).toArray();
-
-                // if resources found, execute store functions
-                if (retrievedResource.length > 0) {
-                    await storeResources(resourceType, retrievedResource, selectedProject);
-                    logGreen(`Stored ${resourceType.substr(0, resourceType.length - 1)} with id ${resource} ...`);
-                } else logGreen(`No ${resourceType} found. Continuing...`);
-            }
-        }
-    }
-}
-
-/**
- * Main export function for the selected project
- * @param projectID The ID of the selected project
- */
-async function exportProject(projectID: string): Promise<void> {
-    const selectedProject: IProject = allProjects.find((element) => element._id.toString() === projectID);
-    if (selectedProject) {
-        // store project datastructure and metadata
-        await storeProject(selectedProject);
-        const resources = {
-            flows: [],
-            lexicons: [],
-            playbooks: [],
-            endpoints: [],
-            forms: [],
-            nlpconnectors: [],
-            databaseconnections: [],
-            secrets: [],
-            settings: []
-        };
-        // store IDs of resources in resources arrays
-        selectedProject.resources.forEach((resource) => {
-            switch (resource.type) {
-                case "flow":
-                    resources.flows.push(resource.parentId);
-                    break;
-                default:
-                    resources[`${resource.type}s`].push(resource._id);
-            }
-        });
-        // add settings as a resource
-        resources.settings.push(selectedProject.settingsId);
-
-        await retrieveResources(resources, selectedProject);
-    }
-}
 
 /**
  * Wrapper function to get started
@@ -204,26 +113,46 @@ async function exportProject(projectID: string): Promise<void> {
 async function start(): Promise<void> {
     try {
         // send welcome message
-        showWelcomeMessage();
+        await showWelcomeMessage();
 
         // connect to the source mongodb
-        await connectToDB();
+        const mongoClient = await connectToDB();
 
-        // get all projects for the given organisation
-        const projects = await getProjects();
+        // select what to export
+        const task = await showTaskSelection();
 
-        // select a project
-        const selectedProjects = await selectProject(projects);
+        switch (task) {
+            case "Projects":
+                // get all projects for the given organisation
+                const projects = await getProjects();
 
-        for (let selectedProject of selectedProjects) {
-            logGreen("\n################################################################\nStarting export of project " + selectedProject);
-            // start the export of the project
-            await exportProject(selectedProject);
-            logGreen("\nFinished export of project " + selectedProject + "\n################################################################\n");
+                // select a project
+                const selectedProjects = await selectProject(projects);
+
+                for (let selectedProject of selectedProjects) {
+                    logGreen("\n################################################################\nStarting export of project " + selectedProject);
+                    // start the export of the project
+                    await projects.exportProject(selectedProject, allProjects);
+                    logGreen("\nFinished export of project " + selectedProject + "\n################################################################\n");
+                }
+
+                // log success message
+                logGreen("\nDONE - your project export has been saved to disc.");
+                break;
+
+            case "Conversations":
+                break;
+
+            case "Analytics":
+                break;
+
+            case "Profiles":
+                break;
+
+            default:
+                logGreen(`\nStarting task ${task}.`);
         }
 
-        // log success message
-        logGreen("\nDONE - your export has been saved to disc.");
         process.exit(0);
     } catch (err) {
         logRed(err);
