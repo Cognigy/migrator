@@ -3,7 +3,7 @@ import { logGreen, logRed } from './helper/logger';
 import MongoConnection from './helper/MongoConnection';
 import * as inquirer from 'inquirer';
 import { ObjectID } from 'mongodb';
-import * as projects from './project';
+import { exportProject } from './project';
 import { IExportOptions } from './helper/interfaces';
 import { exportDocuments } from './documents';
 
@@ -136,7 +136,7 @@ async function start(): Promise<void> {
                 for (let selectedProject of selectedProjects) {
                     logGreen("\n################################################################\nStarting export of project " + selectedProject);
                     // start the export of the project
-                    await projects.exportProject(selectedProject, allProjects);
+                    await exportProject(selectedProject, allProjects);
                     logGreen("\nFinished export of project " + selectedProject + "\n################################################################\n");
                 }
 
