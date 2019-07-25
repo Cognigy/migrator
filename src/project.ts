@@ -62,9 +62,9 @@ async function retrieveResources(resources: any, selectedProject: IProject): Pro
             logGreen(`Retrieving ${resources[resourceType].length} ${resourceType.substr(0, resourceType.length - 1)}(s) ...`);
 
             // connect to the correct source db
-            let resourceDBName = resourceType;
-            if (resourceType === "databaseconnections") resourceDBName = "database-connections";
-            if (resourceType === "nlpconnectors") resourceDBName = "nlp-connectors";
+            let resourceDBName = "service-" + resourceType;
+            if (resourceType === "databaseconnections") resourceDBName = "service-database-connections";
+            if (resourceType === "nlpconnectors") resourceDBName = "service-nlp-connectors";
             const resourceDB = MongoConnection.getConnection().db(resourceDBName);
 
             // go through all resources in resource type
