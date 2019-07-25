@@ -68,7 +68,7 @@ async function connectToDB(): Promise<any> {
 async function getProjects(): Promise<any> {
     try {
         const mongoClient = MongoConnection.getConnection();
-        const projectsDB = mongoClient.db("projects");
+        const projectsDB = mongoClient.db("service-projects");
         return projectsDB.collection("projects")
             .find({ organisation: new ObjectID(process.env.SOURCE_ORG_ID) })
             .toArray();
@@ -130,7 +130,6 @@ async function start(): Promise<void> {
             case "Projects":
                 // get all projects for the given organisation
                 const projects = await getProjects();
-
                 // select a project
                 const selectedProjects = await selectProject(projects);
 
