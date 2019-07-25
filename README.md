@@ -1,6 +1,6 @@
 # Cognigy Environment Migrator
 
-This tool allows for the export of a Cognigy.AI project, including all resources, to disc.
+This tool allows for the export of a Cognigy.AI projects, including all resources, analytics, conversations, profiles and profile schemas to disc.
 
 The resulting files can then easily be imported into another environment.
 
