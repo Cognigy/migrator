@@ -14,8 +14,15 @@ async function storeDocuments(documentsArray: Array<any>, options: IExportOption
     createFolderIfNotExist(`/data/organisations/${process.env.SOURCE_ORG_ID}`);
     createFolderIfNotExist(`/data/organisations/${process.env.SOURCE_ORG_ID}/${options.type}`);
     documentsArray.forEach((document) => {
-        document.organisation = process.env.TARGET_ORG_ID;
-        fs.writeFileSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG_ID}/${options.type}/${document._id}.json`, JSON.stringify(replaceObjectIDs(document)));
+        if (options.replaceObjectIDs) {
+            document.organisation = process.env.TARGET_ORG_ID;
+            fs.writeFileSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG_ID}/${options.type}/${document._id}.json`, JSON.stringify(replaceObjectIDs(document)));
+        } else {
+            document.organisation = {
+                "$oid": process.env.TARGET_ORG_ID
+            };
+            fs.writeFileSync(`${__dirname}/data/organisations/${process.env.SOURCE_ORG_ID}/${options.type}/${document._id}.json`, JSON.stringify(document));
+        }
     });
 }
 

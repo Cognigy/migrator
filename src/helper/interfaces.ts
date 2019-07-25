@@ -35,4 +35,7 @@ export interface IExportOptions {
 
     /* What collection are the documents in? */
     collection: string;
+
+    /* Replace all OIDs? */
+    replaceObjectIDs: boolean;
 }
