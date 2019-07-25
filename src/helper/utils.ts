@@ -1,6 +1,6 @@
 import * as fs from 'fs-extra';
 import { ObjectID } from 'mongodb';
-import { logRed } from './logger';
+import { logRed, logYellow } from './logger';
 import * as _ from 'lodash';
 import * as dependencyReplacements from '../dependencyReplacements.json';
 
@@ -68,8 +68,12 @@ export function checkFlowDependencies(resource: any): any {
         resource.lexica.cognigy.forEach((value, index, sourceArray) => {
             if (dependencyReplacements[value]) sourceArray[index] = dependencyReplacements[value];
             else {
-                logRed(`Missing dependency mapping in dependencyReplacements.json: COGNIGGY LEXICON ${value}\nPlease add this resource to the file.\nAborting...`);
-                process.exit(0);
+                if (process.env.ABORT_ON_ERROR) {
+                    logRed(`Missing dependency mapping in dependencyReplacements.json: COGNIGGY LEXICON ${value}\nPlease add this resource to the file.\nAborting...`);
+                    process.exit(0);
+                } else {
+                    logYellow(`Missing dependency mapping in dependencyReplacements.json: COGNIGGY LEXICON ${value}\nPlease add this resource to the file.\nAborting...`);
+                }
             }
         });
     }
@@ -80,8 +84,12 @@ export function checkFlowDependencies(resource: any): any {
         resource.attachedFlows.cognigy.forEach((value, index, sourceArray) => {
             if (dependencyReplacements[value]) sourceArray[index] = dependencyReplacements[value];
             else {
-                logRed(`Missing dependency mapping in dependencyReplacements.json: ATTACHED COGNIGY FLOW ${value}\nPlease add this resource to the file.\nAborting...`);
-                process.exit(0);
+                if (process.env.ABORT_ON_ERROR) {
+                    logRed(`Missing dependency mapping in dependencyReplacements.json: ATTACHED COGNIGY FLOW ${value}\nPlease add this resource to the file.\nAborting...`);
+                    process.exit(0);
+                } else {
+                    logYellow(`Missing dependency mapping in dependencyReplacements.json: ATTACHED COGNIGY FLOW ${value}\nPlease add this resource to the file.\nAborting...`);
+                }
             }
         });
     }
