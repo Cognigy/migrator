@@ -30,8 +30,6 @@ async function storeDocuments(documentsArray: Array<any>, options: IExportOption
  * Retrieves the documents for the selected source
  */
 async function retrieveDocuments(options: IExportOptions): Promise<Array<any>> {
-    logGreen(`Loading documents ...`);
-
     const analyticsDB = MongoConnection.getConnection().db(options.db);
     return await analyticsDB.collection(options.collection).find({ organisation: process.env.SOURCE_ORG_ID }).toArray();
 }
@@ -40,7 +38,11 @@ async function retrieveDocuments(options: IExportOptions): Promise<Array<any>> {
  * Main export function for the selected source
  */
 export async function exportDocuments(options: IExportOptions): Promise<Number> {
-    const analyticsdata = await retrieveDocuments(options);
-    await storeDocuments(analyticsdata, options);
-    return Promise.resolve(analyticsdata.length);
+    logGreen(`Loading ${options.type} documents from MongoDB ...`);
+    const documentdata = await retrieveDocuments(options);
+    logGreen(`Retrieved ${documentdata.length} documents.`);
+    logGreen(`Storing documents ...`);
+    await storeDocuments(documentdata, options);
+    logGreen(`Stored documents to ./build/data/...`);
+    return Promise.resolve(documentdata.length);
 }
