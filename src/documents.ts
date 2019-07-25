@@ -9,6 +9,9 @@ import MongoConnection from './helper/MongoConnection';
  * @param documents Array of documents
  */
 async function storeDocuments(documentsArray: Array<any>, options: IExportOptions): Promise<void> {
+    createFolderIfNotExist(`/data`);
+    createFolderIfNotExist(`/data/organisations/`);
+    createFolderIfNotExist(`/data/organisations/${process.env.SOURCE_ORG_ID}`);
     createFolderIfNotExist(`/data/organisations/${process.env.SOURCE_ORG_ID}/${options.type}`);
     documentsArray.forEach((document) => {
         document.organisation = process.env.TARGET_ORG_ID;
